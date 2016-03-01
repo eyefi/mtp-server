@@ -14,6 +14,7 @@ set(MTP_VERSION_PATCH 0)
 
 find_package(Boost REQUIRED COMPONENTS thread system filesystem unit_test_framework)
 pkg_check_modules(GLOG libglog)
+pkg_check_modules(Android_properties libandroid-properties)
 
 set(
     MTP_HEADERS
@@ -66,9 +67,14 @@ add_library(
     ${MTP_SRCS}
 )
 
+target_compile_options(
+  mtpserver
+  PRIVATE -DUSE_LIBANDROID_PROPERTIES=$<BOOL:${Android_properties_FOUND}>
+)
+
 target_link_libraries(
   mtpserver
-  android-properties
+  ${Android_properties_LIBRARIES}
   ${GLOG_LIBRARIES}
 )
 

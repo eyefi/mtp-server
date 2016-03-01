@@ -29,7 +29,9 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#if USE_LIBANDROID_PROPERTIES
 #include <hybris/properties/properties.h>
+#endif
 #include <glog/logging.h>
 
 namespace
@@ -47,7 +49,6 @@ android::MtpStorage* internal_storage;
 int main(int argc, char** argv)
 {
     struct passwd *userdata = getpwuid (getuid());
-    char product_name[PROP_VALUE_MAX];
     int fd = open("/dev/mtp_usb", O_RDWR);
 
     google::InitGoogleLogging(argv[0]);
@@ -70,7 +71,12 @@ int main(int argc, char** argv)
             FileSystemConfig::directory_perm)
     };
 
+#if USE_LIBANDROID_PROPERTIES
+    char product_name[PROP_VALUE_MAX];
     property_get ("ro.product.model", product_name, "Ubuntu Touch device");
+#else
+    char *product_name = getenv("MTP_SERVER_MODEL") ?: (char *)"";
+#endif
 
     internal_storage = new android::MtpStorage(
         MTP_STORAGE_FIXED_RAM, 

@@ -40,7 +40,9 @@
 
 #include <linux/usb/f_mtp.h>
 
+#if USE_LIBANDROID_PROPERTIES
 #include <hybris/properties/properties.h>
+#endif
 
 #include <glog/logging.h>
 
@@ -450,7 +452,6 @@ bool MtpServer::handleRequest() {
 MtpResponseCode MtpServer::doGetDeviceInfo() {
     VLOG(1) <<  __PRETTY_FUNCTION__;
     MtpStringBuffer   string;
-    char prop_value[PROP_VALUE_MAX];
 
     MtpObjectFormatList* playbackFormats = mDatabase->getSupportedPlaybackFormats();
     MtpObjectFormatList* captureFormats = mDatabase->getSupportedCaptureFormats();
@@ -482,18 +483,31 @@ MtpResponseCode MtpServer::doGetDeviceInfo() {
     mData.putAUInt16(captureFormats); // Capture Formats
     mData.putAUInt16(playbackFormats);  // Playback Formats
 
+#if USE_LIBANDROID_PROPERTIES
+    char prop_value[PROP_VALUE_MAX];
     property_get("ro.product.manufacturer", prop_value, "unknown manufacturer");
     string.set(prop_value);
+#else
+    string.set(getenv("MTP_SERVER_MANUFACTURER") ?: "");
+#endif
     mData.putString(string);   // Manufacturer
 
+#if USE_LIBANDROID_PROPERTIES
     property_get("ro.product.model", prop_value, "MTP Device");
     string.set(prop_value);
+#else
+    string.set(getenv("MTP_SERVER_MODEL") ?: "");
+#endif
     mData.putString(string);   // Model
     string.set("1.0");
     mData.putString(string);   // Device Version
 
+#if USE_LIBANDROID_PROPERTIES
     property_get("ro.serialno", prop_value, "????????");
     string.set(prop_value);
+#else
+    string.set(getenv("MTP_SERVER_SERIAL_NO") ?: "");
+#endif
     mData.putString(string);   // Serial Number
 
     delete playbackFormats;
