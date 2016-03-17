@@ -847,8 +847,24 @@ MtpResponseCode MtpServer::doGetPartialObject(MtpOperationCode operation) {
     mResponse.setParameter(1, length);
 
     // transfer the file
+#if 0
     int ret = ioctl(mFD, MTP_SEND_FILE_WITH_HEADER, (unsigned long)&mfr);
     VLOG(2) << "MTP_SEND_FILE_WITH_HEADER returned " << ret;
+#else
+    int ret = -1;
+    void* data = malloc(length);
+    if (data) {
+        // send data
+	lseek(mfr.fd, offset, 0);
+	read(mfr.fd, data, length);
+        mData.setOperationCode(mRequest.getOperationCode());
+        mData.setTransactionID(mRequest.getTransactionID());
+        int l = mData.writeData(mFD, data, length);
+	VLOG(1) << "mData.writeData(length = " << length << ") = " << l;
+        free(data);
+	ret = 0;
+    }
+#endif
     close(mfr.fd);
     if (ret < 0) {
         if (errno == ECANCELED)

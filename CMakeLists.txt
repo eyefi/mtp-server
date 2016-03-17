@@ -63,7 +63,7 @@ include_directories(
 )
 
 add_library(
-    mtpserver SHARED
+    mtpserver
     ${MTP_SRCS}
 )
 
@@ -93,6 +93,7 @@ set_target_properties(
 
 install(
   TARGETS mtpserver
+  ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib
   PUBLIC_HEADER DESTINATION include/mtp
