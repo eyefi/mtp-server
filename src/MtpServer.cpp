@@ -852,17 +852,26 @@ MtpResponseCode MtpServer::doGetPartialObject(MtpOperationCode operation) {
     VLOG(2) << "MTP_SEND_FILE_WITH_HEADER returned " << ret;
 #else
     int ret = -1;
-    void* data = malloc(length);
-    if (data) {
+    void* buffer = malloc(length);
+    if (buffer) {
         // send data
-	lseek(mfr.fd, offset, 0);
-	read(mfr.fd, data, length);
+        lseek(mfr.fd, offset, 0);
+        read(mfr.fd, buffer, length);
         mData.setOperationCode(mRequest.getOperationCode());
         mData.setTransactionID(mRequest.getTransactionID());
-        int l = mData.writeData(mFD, data, length);
-	VLOG(1) << "mData.writeData(length = " << length << ") = " << l;
-        free(data);
-	ret = 0;
+        uint8_t* data = (uint8_t*)buffer;
+        while (length > 0) {
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+            int l = MIN(length, 65500);
+            int r = mData.writeData(mFD, data, l);
+            VLOG(1) << "mData.writeData(length = " << l << ") = " << r;
+            if (r != 0)
+                break;
+            data += l;
+            length -= l;
+        }
+        free(buffer);
+        ret = length == 0 ? 0 : -1;
     }
 #endif
     close(mfr.fd);
